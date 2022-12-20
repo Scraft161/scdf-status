@@ -52,20 +52,20 @@ fn statusbar_time() -> String {
 	)
 }
 
-fn statusbar_cpu() -> String {
+fn statusbar_cpu() -> f64 {
 	let cpu_usage = sys_info::loadavg().unwrap();
 
-	cpu_usage.one.to_string()
+	cpu_usage.one
 }
 
-fn statusbar_ram() -> (String, String) {
+fn statusbar_ram() -> (i32, i32) {
 	let mem_use = sys_info::mem_info().unwrap();
 
 	let ram_use_perc = (((mem_use.total - mem_use.avail) as f64 / mem_use.total as f64) * 100.0).round() as i32;
 	let swap_use_perc = (((mem_use.swap_total - mem_use.swap_free) as f64 / mem_use.swap_total as f64) * 100.0).round() as i32;
 
 	(
-		ram_use_perc.to_string(),
-		swap_use_perc.to_string()
+		ram_use_perc,
+		swap_use_perc
 	)
 }
