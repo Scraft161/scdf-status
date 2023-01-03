@@ -6,6 +6,10 @@ use x11::xlib::{XCloseDisplay, XDefaultScreen, XOpenDisplay, XRootWindow, XStore
 extern crate sys_info;
 
 fn main() {
+    // Values that depend on previous ones
+    let mut sys_load_prev: f64 = -10.0;
+    let mut sys_load_since_update_stale = -10.0;
+
 	loop {
 		let display = unsafe { XOpenDisplay(std::ptr::null()) };
 		let screen = unsafe { XDefaultScreen(display) };
@@ -13,11 +17,27 @@ fn main() {
 
 		let date = statusbar_date();
 		let time = statusbar_time();
-		let cpu_use = statusbar_cpu();
+		let sys_load = statusbar_system();
+        // Accomodate for load diff if we have new data
+        let sys_load_since_update = if sys_load_prev == sys_load {
+            sys_load_since_update_stale
+        } else {
+            let sys_load_diff = sys_load - sys_load_prev;
+            sys_load_prev = sys_load;
+            sys_load_since_update_stale = sys_load_diff;
+
+            sys_load_diff
+        };
 		let (ram_use, swap_use) = statusbar_ram();
 
+        // Don't show load diff when we don't know it's value
+        let sys_load_format = match sys_load_since_update {
+            _ if sys_load_since_update == (sys_load - 10.0) => {format!("{sys_load:.01}")},
+            _ => {format!("{sys_load:.01} ({sys_load_since_update:+.01})")},
+        };
+
 		let status = format!(
-			"| CPU: {cpu_use} | MEM: {ram_use}% / SWP: {swap_use}% | {date} / {time} |"
+			"| SYS: {sys_load_format} | MEM: {ram_use}% / SWP: {swap_use}% | {date} / {time} |"
 		);
 
 		let cstatus = CString::new(status).unwrap();
@@ -52,10 +72,10 @@ fn statusbar_time() -> String {
 	)
 }
 
-fn statusbar_cpu() -> f64 {
-	let cpu_usage = sys_info::loadavg().unwrap();
+fn statusbar_system() -> f64 {
+	let system_load = sys_info::loadavg().unwrap();
 
-	cpu_usage.one
+	system_load.one // minute
 }
 
 fn statusbar_ram() -> (i32, i32) {
