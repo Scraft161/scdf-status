@@ -32,7 +32,7 @@ fn main() {
 
         // Don't show load diff when we don't know it's value
         let sys_load_format = match sys_load_since_update {
-            _ if sys_load_since_update == (sys_load - 10.0) => {format!("{sys_load:.01}")},
+            _ if sys_load_since_update == (sys_load + 10.0) => {format!("{sys_load:.01}")},
             _ => {format!("{sys_load:.01} ({sys_load_since_update:+.01})")},
         };
 
